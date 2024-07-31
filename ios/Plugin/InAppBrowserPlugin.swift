@@ -132,14 +132,17 @@ public class InAppBrowserPlugin: CAPPlugin {
         self.isPresentAfterPageLoad = call.getBool("isPresentAfterPageLoad", false)
         let showReloadButton = call.getBool("showReloadButton", false)
 
+        let blockRules = call.getString("blockRules", "")
+
         DispatchQueue.main.async {
             let url = URL(string: urlString)
 
             if self.isPresentAfterPageLoad {
-                self.webViewController = WKWebViewController.init(url: url!, headers: headers, isInspectable: isInspectable)
+                self.webViewController = WKWebViewController.init(url: url!, headers: headers, blockRules: blockRules, isInspectable: isInspectable)
             } else {
                 self.webViewController = WKWebViewController.init()
                 self.webViewController?.setHeaders(headers: headers)
+                self.webViewController?.setWebViewBlockRules(blockRules: blockRules)
             }
 
             self.webViewController?.source = .remote(url!)

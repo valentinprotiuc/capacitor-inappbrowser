@@ -67,6 +67,13 @@ open class WKWebViewController: UIViewController {
         self.initWebview(isInspectable: isInspectable)
     }
 
+    public init(url: URL, headers: [String: String], blockRules: String, isInspectable: Bool) {
+        super.init(nibName: nil, bundle: nil)
+        self.source = .remote(url)
+        self.setHeaders(headers: headers)
+        self.initWebview(blockRules: blockRules, isInspectable: isInspectable)
+    }
+
     open var hasDynamicTitle = false
     open var source: WKWebSource?
     /// use `source` instead
@@ -101,6 +108,20 @@ open class WKWebViewController: UIViewController {
 
         if let userAgent = userAgent {
             self.customUserAgent = userAgent
+        }
+    }
+
+    func setWebViewBlockRules(blockRules: String) {
+        WKContentRuleListStore.default().compileContentRuleList(
+            forIdentifier: "ContentBlockingRules",
+            encodedContentRuleList: blockRules) { (contentRuleList, error) in
+
+                if let error = error {
+                    return
+                }
+
+                let configuration = self.webView?.configuration
+                configuration?.userContentController.add(contentRuleList!)
         }
     }
 
@@ -208,7 +229,7 @@ open class WKWebViewController: UIViewController {
         }
     }
 
-    open func initWebview(isInspectable: Bool = true) {
+    open func initWebview(blockRules: String, isInspectable: Bool = true) {
 
         self.view.backgroundColor = UIColor.white
 
@@ -216,6 +237,15 @@ open class WKWebViewController: UIViewController {
         self.edgesForExtendedLayout = [.bottom]
 
         let webConfiguration = WKWebViewConfiguration()
+        WKContentRuleListStore.default().compileContentRuleList(
+                            forIdentifier: "ContentBlockingRules",
+                            encodedContentRuleList: blockRules) { (contentRuleList, error) in
+                                if let error = error {
+                                    return
+                                }
+                                webConfiguration?.userContentController.add(contentRuleList!)
+                        }
+
         let webView = WKWebView(frame: .zero, configuration: webConfiguration)
 
         if webView.responds(to: Selector(("setInspectable:"))) {
